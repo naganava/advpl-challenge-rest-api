@@ -9,6 +9,7 @@ Teste para seleção de desenvolvedores LIGUE
 Irá retornar uma lista com todos as ocorrências registradas no Protheus.
 > Pode ser adicionado os parâmetros page e pageSize para selecionar quantos registros por página deseja retornar. 
 ![Exemplo get /ocurrences?page=1&pageSize=1](/exemplos/get_page.png "Exemplo get /ocurrences?page=1&pageSize=1")
+
 	GET /ocurrences/{recno}
 Irá retornar os dados da ocorrência com o recno selecionado.
 
