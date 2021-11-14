@@ -21,6 +21,11 @@ WSRESTFUL ocurrences DESCRIPTION "WebService REST ocurrences API" FORMAT "applic
 		DESCRIPTION "Retorna dados referente a ocorrências";
 		WSSYNTAX "/{method}";
 		PRODUCES APPLICATION_JSON
+
+	WSMETHOD POST ocurrences;
+		DESCRIPTION "Cria uma nova ocorrência no Protheus";
+		WSSYNTAX "/{method}";
+		PRODUCES APPLICATION_JSON
 END WSRESTFUL
 
 /*/{Protheus.doc} ocurrences
@@ -39,6 +44,26 @@ WSMETHOD GET ocurrences QUERYPARAM page,pageSize WSREST ocurrences
 			lRet := getList(self)
 		@{When '/{id}'}
 			lRet := getOcurrence(self)
+		@{Default}
+            SetRestFault(400,"Bad Request")
+			lRet := .F.
+	@{EndRoute}
+Return lRet
+
+/*/{Protheus.doc} ocurrences
+Método POST, responsável pelo maepamento do método
+@type WSMETHOD
+@version 1.0
+@author Felipe Naganava
+@since 13/11/2021
+@return logical, .T. caso a requisição seja um sucesso, .F. se der algum erro 
+/*/
+WSMETHOD POST ocurrences WSREST ocurrences
+	Local lRet
+
+	@{Route}
+        @{When '/'}
+			lRet := postOcurrence(self)	
 		@{Default}
             SetRestFault(400,"Bad Request")
 			lRet := .F.
@@ -103,4 +128,38 @@ Static Function getOcurrence(oWS)
 	//faz a desalocação de objetos e arrays utilizados
 	oOcurrence:DeActivate()
 	oOcurrence := nil
+Return lRet
+
+/*/{Protheus.doc} postOcurrence
+Função para tratamento do método post
+@type function
+@version 1.0
+@author Felipe Naganava
+@since 13/11/2021
+@param oWS, object, objeto de requisição
+@return logical, .T. caso a requisição seja um sucesso, .F. se der algum erro 
+/*/
+Static Function postOcurrence(oWS)	
+	Local lRet			:= .T.
+	Local oOcurrence	:= nil
+	Local oResponse		:= JsonObject():New()
+	Local oBody			:= JsonObject():New()
+
+	oBody := JsonObject():New()
+    oBody:FromJson(oWs:GetContent())
+
+	cChave		:= oBody["chave"]
+	cDescri		:= oBody["descri"]
+	cDescSpa	:= oBody["descSpa"]
+	cDescEng	:= oBody["descEng"]
+
+	oOcurrence := ocurrences():new('POST')
+	oOcurrence:Create(cChave,cDescri,cDescSpa,cDescEng,@oResponse)
+
+	If oOcurrence:lOk
+		oWS:SetResponse(oResponse:toJson())
+	Else
+		SetRestFault(400,oResponse:toJson())
+		lRet := .F.
+	EndIf
 Return lRet

@@ -13,6 +13,7 @@ CLASS Ocurrences FROM FWAdapterBaseV2
 	METHOD New()
 	METHOD GetList()
 	METHOD GetOcurrence(cId)
+    METHOD Create(cTabela,cChave,cDescri,cDescSpa,cDescEng,oResponse)
 
 EndClass
 
@@ -53,7 +54,7 @@ Method GetList() CLASS Ocurrences
 	cQuery := getQuery()
 	::SetQuery(cQuery)
 
-    cWhere := " d_e_l_e_t_ = ' ' AND x5_tabela = 'T9' AND x5_filial = ' '"
+    cWhere := " d_e_l_e_t_ = ' ' AND x5_tabela = 'ZZ' AND x5_filial = 'LG01'"
 	::SetWhere(cWhere)
 
     ::SetOrder( "X5_CHAVE" )
@@ -90,7 +91,7 @@ Method GetOcurrence(cId) CLASS Ocurrences
 	cQuery := getQuery()
 	::SetQuery(cQuery)
 
-    cWhere := " d_e_l_e_t_ = ' ' AND x5_tabela = 'T9' AND x5_filial = ' ' AND SX5.R_E_C_N_O_ = '"+cId+"'"
+    cWhere := " d_e_l_e_t_ = ' ' AND x5_tabela = 'ZZ' AND x5_filial = 'LG01' AND SX5.R_E_C_N_O_ = '"+cId+"'"
 	::SetWhere(cWhere)
 
     ::SetOrder( "X5_CHAVE" )
@@ -99,6 +100,51 @@ Method GetOcurrence(cId) CLASS Ocurrences
 		::FillGetResponse()
 	EndIf
 	FwrestArea(aArea)
+Return
+
+/*/{Protheus.doc} Ocurrences::Create
+Método para criar uma nova ocorrência no Protheus
+@type method
+@version 1.0
+@author Felipe Naganava
+@since 13/11/2021
+@param cChave, character, chave
+@param cDescri, character, descrição
+@param cDescSpa, character, descrição em espanhol
+@param cDescEng, character, descrição em inglês
+@param oResponse, object, objeto json para resposta do rest (Passar paramêtro como referencia "@")
+/*/
+Method Create(cChave,cDescri,cDescSpa,cDescEng,oResponse) CLASS Ocurrences
+	If (cChave == Nil .OR. cDescri == Nil .OR. cDescSpa == Nil .OR. cDescEng == Nil)
+		::lOk := .F.
+		oResponse["error"] := "body_invalido"
+        oResponse["description"] := "Forneça as propriedades 'chave', 'descri', 'descSpa' e descEng no body"
+    Else
+		DBSelectArea('SX5')
+		DBSetOrder(1) //X5_FILIAL, X5_TABELA, X5_CHAVE, R_E_C_N_O_, D_E_L_E_T_
+		If DBSeek('LG01'+'ZZ'+cChave)
+			oResponse["error"] := "chave_ja_existe"
+        	oResponse["description"] := "A chave informada já existe"
+		Else
+			RecLock('SX5', .T.)
+				X5_FILIAL   := 'LG01'
+				X5_TABELA   := 'ZZ'
+				X5_CHAVE    := cChave
+				X5_DESCRI   := cDescri
+				X5_DESCSPA  := cDescSpa
+				X5_DESCENG  := cDescEng
+			SX5->(MsUnlock())
+			oResponse["filial"]		:= SX5->X5_FILIAL
+			oResponse["tabela"]		:= SX5->X5_TABELA
+			oResponse["chave"]		:= SX5->X5_CHAVE
+			oResponse["descri"]		:= SX5->X5_DESCRI
+			oResponse["descSpa"]	:= SX5->X5_DESCSPA
+			oResponse["descEng"] 	:= SX5->X5_DESCENG
+			oResponse["recno"]		:= SX5->(recno())
+			::lOk := .T.
+		EndIf
+    EndIf
+	
 Return
 
 /*/{Protheus.doc} getQuery
