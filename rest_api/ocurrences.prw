@@ -15,6 +15,7 @@ CLASS Ocurrences FROM FWAdapterBaseV2
 	METHOD GetOcurrence(cId)
     METHOD Create(cChave,cDescri,cDescSpa,cDescEng,oResponse)
 	METHOD Update(cDescri,cDescSpa,cDescEng,cId,oResponse)
+	METHOD Delete(cId,oResponse)
 
 EndClass
 
@@ -26,7 +27,7 @@ Método construtor da classe Ocurrences
 @since 12/11/2021
 @param cVerb, character, PUT, POST, GET ou DELETE
 /*/
-Method New( cVerb ) CLASS Ocurrences
+Method New(cVerb) CLASS Ocurrences
 	_Super:New( cVerb, .T. )
 Return
 
@@ -161,7 +162,7 @@ Método para atualizar uma ocorrência no Protheus
 @param oResponse, object, objeto json para resposta do rest (Passar paramêtro como referencia "@")
 /*/
 Method Update(cDescri,cDescSpa,cDescEng,cId,oResponse) CLASS Ocurrences
-	If (cChave == Nil .AND. cDescri == Nil .AND. cDescSpa == Nil .AND. cDescEng == Nil)
+	If (cDescri == Nil .AND. cDescSpa == Nil .AND. cDescEng == Nil)
 		::lOk := .F.
 		oResponse["error"] := "body_invalido"
         oResponse["description"] := "Forneça alguma das propriedades 'chave', 'descri', 'descSpa' ou descEng no body"
@@ -174,16 +175,9 @@ Method Update(cDescri,cDescSpa,cDescEng,cId,oResponse) CLASS Ocurrences
 			oResponse["description"] := "A chave recno não foi encontrada ou não é referente a tabela ZZ da filial LG01"
 		Else
 			RecLock('SX5', .F.)
-				Do Case
-					Case !Empty(cChave)
-						X5_CHAVE    := cChave
-					Case !Empty(cDescri)
-						X5_DESCRI   := cDescri
-					Case !Empty(cDescSpa)
-						X5_DESCSPA  := cDescSpa
-					Case !Empty(cDescEng)
-						X5_DESCENG  := cDescEng
-				EndCase
+				X5_DESCRI   := IIF(!Empty(cDescri),cDescri,SX5->X5_DESCRI)
+				X5_DESCSPA  := IIF(!Empty(cDescri),cDescSpa,SX5->X5_DESCSPA)
+				X5_DESCENG  := IIF(!Empty(cDescri),cDescEng,SX5->X5_DESCENG)
 			SX5->(MsUnlock())
 			oResponse["filial"]		:= SX5->X5_FILIAL
 			oResponse["tabela"]		:= SX5->X5_TABELA
@@ -195,6 +189,32 @@ Method Update(cDescri,cDescSpa,cDescEng,cId,oResponse) CLASS Ocurrences
 			::lOk := .T.
 		EndIf
     EndIf
+Return
+
+/*/{Protheus.doc} Ocurrences::Delete
+Método para deletar uma ocorrência no Protheus
+@type method
+@version 1.0
+@author Felipe Naganava
+@since 13/11/2021
+@param cId, character, recno
+@param oResponse, object, objeto json para resposta do rest (Passar paramêtro como referencia "@")
+/*/
+Method Delete(cId,oResponse) CLASS Ocurrences
+	DBSelectArea('SX5')
+	DBGoTo(val(cId))
+	If SX5->X5_FILIAL <> 'LG01' .or. SX5->X5_TABELA <> 'ZZ'
+		::lOk := .T.
+		oResponse["error"] := "recno_invalido"
+		oResponse["description"] := "A chave recno não foi encontrada ou não é referente a tabela ZZ da filial LG01"
+	Else
+		RecLock('SX5', .F.)
+			DBDelete()
+		SX5->(MsUnlock())
+		oResponse["deletado"]	:= .T.
+		oResponse["recno"]		:= SX5->(recno())
+		::lOk := .T.
+	EndIf
 Return
 
 
