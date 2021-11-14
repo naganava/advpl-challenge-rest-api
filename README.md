@@ -7,12 +7,12 @@ Teste para seleção de desenvolvedores LIGUE
 
 	GET /ocurrences
 Irá retornar uma lista com todos as ocorrências registradas no Protheus.
-![Exemplo get /ocurrences](exemplos\get.png "Exemplo get /ocurrences")
+![Exemplo get /ocurrences](/exemplos/get.png "Exemplo get /ocurrences")
 > Pode ser adicionado os parâmetros page e pageSize para selecionar quantos registros por página deseja retornar. 
-![Exemplo get /ocurrences?page=1&pageSize=1](exemplos\get_page.png "Exemplo get /ocurrences?page=1&pageSize=1")
+![Exemplo get /ocurrences?page=1&pageSize=1](/exemplos/get_page.png "Exemplo get /ocurrences?page=1&pageSize=1")
 	GET /ocurrences/{recno}
 Irá retornar os dados da ocorrência com o recno selecionado.
-![Exemplo get /ocurrences/{recno}](exemplos\get_id.png "Exemplo get /ocurrences/{recno}")
+![Exemplo get /ocurrences/{recno}](/exemplos/get_id.png "Exemplo get /ocurrences/{recno}")
 
 ### POST
 	POST /ocurrences
