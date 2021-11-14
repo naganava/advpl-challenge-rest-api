@@ -3,7 +3,7 @@ Teste para seleção de desenvolvedores LIGUE
 
 ## API REST
 ### GET
-> **O campo recno só será retornado caso a LIB seja superior a 20200727**
+> **O campo recno só será retornado caso a LIB seja superior ou igual a 20200727**
 
 	GET /ocurrences
 Irá retornar uma lista com todos as ocorrências registradas no Protheus.
