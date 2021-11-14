@@ -13,7 +13,8 @@ CLASS Ocurrences FROM FWAdapterBaseV2
 	METHOD New()
 	METHOD GetList()
 	METHOD GetOcurrence(cId)
-    METHOD Create(cTabela,cChave,cDescri,cDescSpa,cDescEng,oResponse)
+    METHOD Create(cChave,cDescri,cDescSpa,cDescEng,oResponse)
+	METHOD Update(cDescri,cDescSpa,cDescEng,cId,oResponse)
 
 EndClass
 
@@ -123,6 +124,7 @@ Method Create(cChave,cDescri,cDescSpa,cDescEng,oResponse) CLASS Ocurrences
 		DBSelectArea('SX5')
 		DBSetOrder(1) //X5_FILIAL, X5_TABELA, X5_CHAVE, R_E_C_N_O_, D_E_L_E_T_
 		If DBSeek('LG01'+'ZZ'+cChave)
+			::lOk := .T.
 			oResponse["error"] := "chave_ja_existe"
         	oResponse["description"] := "A chave informada já existe"
 		Else
@@ -144,8 +146,58 @@ Method Create(cChave,cDescri,cDescSpa,cDescEng,oResponse) CLASS Ocurrences
 			::lOk := .T.
 		EndIf
     EndIf
-	
 Return
+
+/*/{Protheus.doc} Ocurrences::Update
+Método para atualizar uma ocorrência no Protheus
+@type method
+@version 1.0
+@author Felipe Naganava
+@since 13/11/2021
+@param cDescri, character, descrição
+@param cDescSpa, character, descrição em espanhol
+@param cDescEng, character, descrição em inglês
+@param cId, character, recno
+@param oResponse, object, objeto json para resposta do rest (Passar paramêtro como referencia "@")
+/*/
+Method Update(cDescri,cDescSpa,cDescEng,cId,oResponse) CLASS Ocurrences
+	If (cChave == Nil .AND. cDescri == Nil .AND. cDescSpa == Nil .AND. cDescEng == Nil)
+		::lOk := .F.
+		oResponse["error"] := "body_invalido"
+        oResponse["description"] := "Forneça alguma das propriedades 'chave', 'descri', 'descSpa' ou descEng no body"
+    Else
+		DBSelectArea('SX5')
+		DBGoTo(val(cId))
+		If SX5->X5_FILIAL <> 'LG01' .or. SX5->X5_TABELA <> 'ZZ'
+			::lOk := .T.
+			oResponse["error"] := "recno_invalido"
+			oResponse["description"] := "A chave recno não foi encontrada ou não é referente a tabela ZZ da filial LG01"
+		Else
+			RecLock('SX5', .F.)
+				Do Case
+					Case !Empty(cChave)
+						X5_CHAVE    := cChave
+					Case !Empty(cDescri)
+						X5_DESCRI   := cDescri
+					Case !Empty(cDescSpa)
+						X5_DESCSPA  := cDescSpa
+					Case !Empty(cDescEng)
+						X5_DESCENG  := cDescEng
+				EndCase
+			SX5->(MsUnlock())
+			oResponse["filial"]		:= SX5->X5_FILIAL
+			oResponse["tabela"]		:= SX5->X5_TABELA
+			oResponse["chave"]		:= SX5->X5_CHAVE
+			oResponse["descri"]		:= SX5->X5_DESCRI
+			oResponse["descSpa"]	:= SX5->X5_DESCSPA
+			oResponse["descEng"] 	:= SX5->X5_DESCENG
+			oResponse["recno"]		:= SX5->(recno())
+			::lOk := .T.
+		EndIf
+    EndIf
+Return
+
+
 
 /*/{Protheus.doc} getQuery
 Função utilizada para criar a query que busca os registros no banco de dados
